@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./tagcanvas.min.js" type="text/javascript"></script>
+  <script src="./vue.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div id="app">
+    <div class="main-container">
+      <div class="top-bar">
+        <p class="title">年会抽奖</p>
+      </div>
+      <div class="btn-wrap">
+        <button v-if="!running" class="el-button success" @click="toggle()">开始抽奖</button>
+        <button v-if="running" class="el-button warn" @click="toggle()">停止抽奖</button>
+      </div>
+      <div id="myCanvasContainer">
+        <!-- <canvas id="myCanvas"></canvas> -->
+      </div>
+      <div id="tags">
+        <ul v-for="item in guestList">
+          <li>
+            <a href="javascript:void(0);" style="color: rgb(255,255,255);">{{ item }}</a>
+
+          </li>
+        </ul>
+
+      </div>
+    </div>
+    <!-- <audio id="audiobg" preload="auto" controls autoplay loop @play="playHandler" @pause="pauseHandler">
+      <source :src="audioSrc" />
+      你的浏览器不支持audio标签
+    </audio> -->
+  </div>
+
+</body>
+
+<script>
+  // import bgaudio from './assets/bg.mp3';
+  // import beginaudio from './assets/begin.mp3';
+
+  new Vue({
+    el: '#app',
+    data: {
+      // audioSrc: bgaudio,
+      // audioPlaying: false,
+      running: false,
+    },
+
+    created: function () {
+      // `this` 指向 vm 实例
+      // console.log('a is: ' + this.a)
+    },
+
+    computed: {
+      guestList() {
+        const arr = []
+        for (let i = 0; i < 200; i++) {
+          arr.push(i);
+        }
+        return arr;
+      }
+    },
+
+    methods: {
+      speed() {
+        return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
+      },
+
+      createCanvas() {
+        const canvas = document.createElement('canvas');
+        canvas.width = document.body.offsetWidth;
+        canvas.height = document.body.offsetHeight;
+        canvas.id = 'myCanvas';
+        document.getElementById('myCanvasContainer').appendChild(canvas);
+      },
+
+      startTagCanvas() {
+        this.createCanvas();
+        try {
+          TagCanvas.Start('myCanvas', 'tags', {
+            textColour: '#fff',
+            initial: this.speed(),
+            dragControl: 1,
+            textHeight: 20,
+            noSelect: true,
+            lock: 'xy',
+          });
+        } catch (e) {
+          // something went wrong, hide the canvas container
+          document.getElementById('myCanvasContainer').style.display = 'none';
+        }
+        document.getElementById("myCanvas").width = document.body.offsetWidth;
+        document.getElementById("myCanvas").height = document.body.offsetHeight;
+      },
+
+      reportWindowSize() {
+        const AppCanvas = document.getElementById('myCanvas');
+        if (AppCanvas.parentElement) {
+          AppCanvas.parentElement.removeChild(AppCanvas);
+        }
+        this.startTagCanvas();
+      },
+
+      // loadAudio() {
+      //     document.getElementById('audiobg').load();
+      //     this.$nextTick(() => {
+      //         document.getElementById('audiobg').play();
+      //     });
+      // },
+
+      // playHandler() {
+      //     this.audioPlaying = true;
+      // },
+
+      // pauseHandler() {
+      //     this.audioPlaying = false;
+      // },
+
+      toggle() {
+        if (this.running) {
+          // 停止抽奖
+          // this.audioSrc = bgaudio;
+          // this.loadAudio();
+          window.TagCanvas.SetSpeed('myCanvas', this.speed());
+          this.running = !this.running;
+          this.$nextTick(() => {
+            // this.reloadTagCanvas();
+          });
+        } else {
+          // 开始抽奖
+          // this.audioSrc = beginaudio;
+          // this.loadAudio();
+          window.TagCanvas.SetSpeed('myCanvas', [3, 1]);
+          this.running = !this.running;
+          // 随机抽取获奖嘉宾
+        }
+      }
+
+    },
+
+    mounted() {
+      this.startTagCanvas();
+      window.addEventListener('resize', this.reportWindowSize);
+
+    }
+  })
+</script>
+
+
+
+</html>
