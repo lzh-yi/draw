@@ -117,43 +117,70 @@ body {
 .el-button.success:warn {
   background-color: red;
 }
-.c-Result .el-dialog__body {
-  max-height: 500px;
-  overflow-y: auto;
+.result-wrap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-top: 250px;
+  z-index: 999;
+  background-color: rgba(0, 0, 0, 0.7);
 }
-.c-Result .listrow {
-  display: flex;
-  line-height: 30px;
+.result-wrap .container {
+  width: 40%;
+  margin: 0 auto;
 }
-.c-Result .listrow .name {
-  width: 80px;
-  font-weight: bold;
-}
-.c-Result .listrow .value {
-  flex: 1;
-}
-.c-Result .listrow .card {
-  display: inline-block;
-  padding: 0 5px;
-  line-height: 30px;
+.result-wrap .container .title {
+  color: red;
+  font-size: 50px;
+  line-height: 120px;
   text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  margin-bottom: 50px;
+}
+.result-wrap .container .result-card-wrap {
+  display: flex;
+  justify-content: start;
+  flex-wrap: wrap;
+}
+.result-wrap .container .result-card-wrap .card-item {
+  background: #fff;
+  width: 160px;
+  height: 160px;
   border-radius: 4px;
   border: 1px solid #ccc;
-  background-color: #f2f2f2;
-  margin-left: 5px;
-  margin-bottom: 5px;
-  position: relative;
+  line-height: 160px;
+  font-weight: 700;
+  margin-right: 20px;
+  margin-bottom: 80px;
   cursor: pointer;
+  text-align: center;
 }
-.c-Result .listrow .card:hover::before {
-  content: '删除';
-  width: 100%;
-  height: 100%;
-  background-color: #ccc;
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: red;
+.result-wrap .container .result-card-wrap .card-item span {
+  font-size: 45px;
+  font-weight: bold;
+}
+.result-wrap .container .footer {
+  text-align: center;
+}
+/*
+  进入和离开动画可以使用不同
+  持续时间和速度曲线。
+*/
+.bounce-enter-active {
+  animation: bounce-in 1s;
+}
+.bounce-leave-active {
+  animation: bounce-in 1s reverse;
+}
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
