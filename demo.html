@@ -1,344 +1,685 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./tagcanvas.min.js" type="text/javascript"></script>
+    <script src="./vue.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <!-- 引入ElementUI样式 -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <!-- 引入ElementUI组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-  <script src="./tagcanvas.min.js" type="text/javascript"></script>
-  <script src="./vue.js" type="text/javascript"></script>
-  <link rel="stylesheet" href="./style.css" />
-  <!-- 引入ElementUI样式 -->
-  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
-  <!-- 引入ElementUI组件库 -->
-  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-</head>
+  <body>
+    <div id="app">
+      <div class="main-container">
+        <el-dialog
+          title="提示"
+          :visible.sync="repeatWarnVisible"
+          width="30%"
+          :before-close="handleRepeatWarnClose"
+        >
+          <span style="font-size: 25px; color: red">该奖项已经抽过了</span>
+          <span slot="footer" class="dialog-footer">
+            <el-button type="primary" @click="repeatWarnVisible = false"
+              >确 定</el-button
+            >
+          </span>
+        </el-dialog>
 
-<body>
-  <div id="app">
-    <div class="main-container">
-      <el-dialog title="提示" :visible.sync="repeatWarnVisible" width="30%" :before-close="handleRepeatWarnClose">
-        <span style="font-size: 25px;color:red">该奖项已经抽过了</span>
-        <span slot="footer" class="dialog-footer">
-          <el-button type="primary" @click="repeatWarnVisible = false">确 定</el-button>
-        </span>
-      </el-dialog>
+        <el-dialog
+          title="抽奖配置"
+          :visible.sync="dialogVisible"
+          width="30%"
+          :before-close="handleClose"
+        >
+          <div>
+            <span style="font-size: 16px">抽取奖项</span>
+            <el-select
+              style="margin-left: 20px"
+              v-model="prizeType"
+              placeholder="请选择"
+            >
+              <el-option
+                v-for="item in prizeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </div>
+          <div style="margin-top: 20px">
+            <span style="font-size: 16px">抽取人数</span>
+            <el-select
+              style="margin-left: 20px"
+              v-model="prizeWinners"
+              placeholder="请选择"
+            >
+              <el-option
+                v-for="item in prizeWinnerOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </div>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="StartLottery">开始抽奖</el-button>
+          </span>
+        </el-dialog>
 
-      <el-dialog title="抽奖配置" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
-        <div>
-          <span style="font-size: 16px">抽取奖项</span>
-          <el-select style="margin-left: 20px" v-model="prizeType" placeholder="请选择">
-            <el-option v-for="item in prizeOptions" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-          </el-select>
-        </div>
-        <div style="margin-top: 20px">
-          <span style="font-size: 16px">抽取人数</span>
-          <el-select style="margin-left: 20px" v-model="prizeWinners" placeholder="请选择">
-            <el-option v-for="item in prizeWinnerOptions" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-          </el-select>
-        </div>
-        <span slot="footer" class="dialog-footer">
-          <el-button @click="dialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="StartLottery">开始抽奖</el-button>
-        </span>
-      </el-dialog>
-
-      <transition name="bounce">
-        <div class="result-wrap" v-show="showRes">
-          <div class="container">
-            <div class="title">{{resultList?.[prizeType]?.name}}抽奖结果：</div>
-            <div class="result-card-wrap">
-              <div class="card-item" v-for="item in resultList?.[prizeType]?.value" :key="item.name">
-                <span>{{item}} </span>
+        <transition name="bounce">
+          <div class="result-wrap" v-show="showRes">
+            <div class="container">
+              <div class="title">
+                {{resultList?.[prizeType]?.name}}抽奖结果：
+              </div>
+              <div class="result-card-wrap">
+                <div
+                  class="card-item"
+                  v-for="item in resultList?.[prizeType]?.value"
+                  :key="item.name"
+                >
+                  <span>{{item}} </span>
+                </div>
+              </div>
+              <div class="footer">
+                <button class="el-button success" @click="closeResult">
+                  关闭
+                </button>
               </div>
             </div>
-            <div class="footer">
-              <button class="el-button success" @click="closeResult">
-                关闭
-              </button>
-            </div>
           </div>
+        </transition>
+
+        <div class="top-bar">
+          <p class="title">抽奖小程序</p>
         </div>
-
-      </transition>
-
-      <div class="top-bar">
-        <p class="title">年会抽奖</p>
+        <div class="btn-wrap">
+          <button v-if="!running" class="el-button success" @click="toggle()">
+            开始抽奖
+          </button>
+          <button v-if="running" class="el-button warn" @click="toggle()">
+            停止抽奖
+          </button>
+        </div>
+        <div id="myCanvasContainer">
+          <!-- <canvas id="myCanvas"></canvas> -->
+        </div>
+        <div id="tags">
+          <ul v-for="item in guestList">
+            <li>
+              <a href="javascript:void(0);" style="color: rgb(255, 255, 255)"
+                >{{ item }}</a
+              >
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="btn-wrap">
-        <button v-if="!running" class="el-button success" @click="toggle()">
-          开始抽奖
-        </button>
-        <button v-if="running" class="el-button warn" @click="toggle()">
-          停止抽奖
-        </button>
-      </div>
-      <div id="myCanvasContainer">
-        <!-- <canvas id="myCanvas"></canvas> -->
-      </div>
-      <div id="tags">
-        <ul v-for="item in guestList">
-          <li>
-            <a href="javascript:void(0);" style="color: rgb(255, 255, 255)">{{ item }}</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <!-- <audio id="audiobg" preload="auto" controls autoplay loop @play="playHandler" @pause="pauseHandler">
+      <!-- <audio id="audiobg" preload="auto" controls autoplay loop @play="playHandler" @pause="pauseHandler">
       <source :src="audioSrc" />
       你的浏览器不支持audio标签
     </audio> -->
-  </div>
-</body>
+    </div>
+  </body>
 
-<script>
-  // import bgaudio from './assets/bg.mp3';
-  // import beginaudio from './assets/begin.mp3';
+  <script>
+    // import bgaudio from './assets/bg.mp3';
+    // import beginaudio from './assets/begin.mp3';
 
-  new Vue({
-    el: "#app",
-    data: {
-      // audioSrc: bgaudio,
-      // audioPlaying: false,
-      running: false,
-      dialogVisible: false,
-      prizeResultViable: false,
-      repeatWarnVisible: false,
-      prizeType: null,
-      prizeWinners: null,
-      showRes: false,
-      resultList: {
-        firstPrize: {
-          name: '一等奖',
-          value: [],
-          num: 0,
+    new Vue({
+      el: "#app",
+      data: {
+        // audioSrc: bgaudio,
+        // audioPlaying: false,
+        running: false,
+        dialogVisible: false,
+        prizeResultViable: false,
+        repeatWarnVisible: false,
+        prizeType: null,
+        prizeWinners: null,
+        showRes: false,
+        resultList: {
+          firstPrize: {
+            name: "一等奖",
+            value: [],
+            num: 0,
+          },
+          secondPrize: {
+            name: "二等奖",
+            value: [],
+            num: 0,
+          },
+          thirdPrize: {
+            name: "三等奖",
+            value: [],
+            num: 0,
+          },
+          // 获奖总人数
+          winnerGuestNum: 0,
         },
-        secondPrize: {
-          name: '二等奖',
-          value: [],
-          num: 0,
-        },
-        thirdPrize: {
-          name: '三等奖',
-          value: [],
-          num: 0,
-        },
-        // 获奖总人数
-        winnerGuestNum: 0,
+        prizeWinnerOptions: [
+          {
+            value: 1,
+            label: "抽取1人",
+          },
+          {
+            value: 5,
+            label: "抽取5人",
+          },
+          {
+            value: 10,
+            label: "抽取10人",
+          },
+        ],
+        prizeOptions: [
+          {
+            value: "firstPrize",
+            label: "一等奖",
+          },
+          {
+            value: "secondPrize",
+            label: "二等奖",
+          },
+          {
+            value: "thirdPrize",
+            label: "三等奖",
+          },
+        ],
+        guestList: [
+          "秋灿真",
+          "仲烨舸",
+          "何锦鹤",
+          "薛迅红",
+          "章麒昊",
+          "符桢连",
+          "仰妍娣",
+          "褚珊碧",
+          "常谨骊",
+          "童姝愉",
+          "秦亭晗",
+          "章眉羚",
+          "费汝琼",
+          "廉嫱妍",
+          "冯妮芊",
+          "明尚声",
+          "刁虎轶",
+          "缪盈千",
+          "宫娆珏",
+          "卓蜜璐",
+          "苗声锬",
+          "凌艺心",
+          "姜准余",
+          "杭欣晓",
+          "咎纲隽",
+          "崔洵振",
+          "谭丛攀",
+          "丁韬秋",
+          "胡海素",
+          "柯苏素",
+          "潘能桦",
+          "钟茵露",
+          "袁艾剑",
+          "姬卿和",
+          "赵烨伟",
+          "符程疆",
+          "甄伊娉",
+          "鲍眉昭",
+          "丁畅娣",
+          "宋帆啸",
+          "傅玮晓",
+          "宫根歆",
+          "陶华可",
+          "巫阔冰",
+          "郝蔷跃",
+          "齐晟君",
+          "司冶萌",
+          "晏跃逊",
+          "邱忱弋",
+          "龚讳易",
+          "倪茜愉",
+          "杭起梁",
+          "裴欣齐",
+          "常念洋",
+          "符榕娜",
+          "姬姝鹃",
+          "郝旖颖",
+          "杨妹迅",
+          "邓祯锦",
+          "宋印益",
+          "仲勇渊",
+          "左楠纯",
+          "嵇璇珍",
+          "宫鸿定",
+          "瞿倩琼",
+          "戴登风",
+          "石愉澄",
+          "邬希游",
+          "高霁娉",
+          "包亮照",
+          "宁鹭迅",
+          "强元玥",
+          "袁魁昂",
+          "吴剑咪",
+          "邢月诚",
+          "左俏葵",
+          "杜程理",
+          "华申泉",
+          "薛菊婉",
+          "明媛允",
+          "龚丽默",
+          "鲍莉茵",
+          "屈季山",
+          "曹柏珑",
+          "韩冲西",
+          "毛惟纯",
+          "娄前珍",
+          "云璞开",
+          "尹津妙",
+          "杨行融",
+          "郦彬蜜",
+          "贡雪漫",
+          "吕子盼",
+          "彭哲韧",
+          "施丹岭",
+          "鲁芬茹",
+          "叶颢行",
+          "叶墨兵",
+          "韩革劲",
+          "鲁劲斌",
+          "奚予茵",
+          "韦垚棋",
+          "管宙霖",
+          "曹建恩",
+          "苏雨明",
+          "郎廷枫",
+          "祁品妮",
+          "毕将勋",
+          "鲁娅荟",
+          "薛柳瑛",
+          "戚立萍",
+          "周歌然",
+          "戴队北",
+          "郝伶湘",
+          "白银营",
+          "魏迅琨",
+          "章涓澄",
+          "宋骁富",
+          "孔易进",
+          "解霓佳",
+          "贡林德",
+          "包阔灿",
+          "钱宜潜",
+          "嵇真琦",
+          "卫萍冶",
+          "农芯鹭",
+          "骆琨生",
+          "阮旎敏",
+          "方勃盟",
+          "尤允晟",
+          "怀旗葵",
+          "邓桃言",
+          "伍嫱俐",
+          "尚迎骞",
+          "舒桔涓",
+          "吕贵均",
+          "祝财谦",
+          "詹州瀚",
+          "袁晶燕",
+          "施思良",
+          "富珊茜",
+          "崔良会",
+          "井霄毓",
+          "高巧荔",
+          "乔知梦",
+          "赖鉴中",
+          "蓬茹丹",
+          "平驰栩",
+          "昌芊璐",
+          "司晟遥",
+          "骆咏震",
+          "平洵元",
+          "伍韧翼",
+          "成沙凌",
+          "童倩倩",
+          "薛歆竹",
+          "朱萱伶",
+          "朱英耘",
+          "巫舸仲",
+          "万艳霓",
+          "皮霓耘",
+          "白嵩寒",
+          "徐桑朴",
+          "喻默郁",
+          "宁旦勃",
+          "计健洲",
+          "胡熙蔷",
+          "水冰麟",
+          "许品坦",
+          "龙椒兰",
+          "仲愉熙",
+          "祝琰椒",
+          "井一咏",
+          "计根隽",
+          "班越锬",
+          "尤钦飚",
+          "赵姿静",
+          "颜锁松",
+          "余侃尤",
+          "贾路焱",
+          "幸飙溢",
+          "皮乾杰",
+          "洪珑樱",
+          "田菱琴",
+          "邓垒柯",
+          "祝爱吟",
+          "毛杏熠",
+          "邴望芝",
+          "邱柯桢",
+          "云莲凤",
+          "倪革营",
+          "晏桢仪",
+          "窦国革",
+          "廉普胤",
+          "程孝铎",
+          "裘韵立",
+          "祖辰煦",
+          "童菁熠",
+          "翁皓麒",
+          "宋怀歌",
+          "孔艾蕴",
+          "解嫱知",
+          "骆韵丽",
+          "瞿卓满",
+          "岑柱仁",
+          "尹女苹",
+          "沈舰斐",
+          "单云雪",
+          "傅骁忠",
+          "胡岚丽",
+          "唐令洲",
+          "翁笛菡",
+          "毕韵燕",
+          "孙菱歌",
+          "诸研洁",
+          "袁花优",
+          "贺壮畅",
+          "苏韵烨",
+          "姚进准",
+          "颜豪钟",
+          "徐韧禹",
+          "时熙子",
+          "石歆可",
+          "武霞均",
+          "许莎洁",
+          "郝成韬",
+          "束琚艺",
+          "贡淑唯",
+          "华游琦",
+          "汤良畅",
+          "阮淳雍",
+          "明蒙照",
+          "强谊宁",
+          "井瑗莺",
+          "吕榕蔷",
+          "赵昊伟",
+          "解满博",
+          "郝韶红",
+          "许柱牧",
+          "裴同想",
+          "咎礼博",
+          "尹钰韶",
+          "徐崧鲲",
+          "龚纲钦",
+          "周茹芊",
+          "平杰禄",
+          "嵇莲微",
+          "戚诺凡",
+          "周阔骥",
+          "劳津达",
+          "梅霞宽",
+          "程淳韬",
+          "王蔓淳",
+          "邬逊滔",
+          "邓珑荷",
+          "谢信鹰",
+          "褚鉴肠",
+          "宫革锦",
+          "鲁律柱",
+          "丁泰文",
+          "孟冶胤",
+          "雷荔芝",
+          "荣可芮",
+          "周晏财",
+          "宣芬露",
+          "姜蔓骊",
+          "褚灏岑",
+          "郭翌奕",
+          "胡铃娥",
+          "萧美芯",
+          "王苹妮",
+          "万桃习",
+          "蓬裕胡",
+          "费蕴伊",
+          "班争泉",
+          "吉咏辰",
+          "云骞同",
+          "尚好忻",
+          "巫舒慈",
+          "梅媛莎",
+          "宣献歆",
+          "史好沛",
+          "单丽颜",
+          "方柏丰",
+          "郭拓玺",
+          "虞珊日",
+          "苏原业",
+          "何强溢",
+          "林典舟",
+          "虞轶典",
+          "薛彤筱",
+          "华连唯",
+          "赵鸿伟",
+          "叶玥望",
+          "高泓菡",
+          "姬臻卓",
+          "费竹畅",
+          "司恋骊",
+          "段月会",
+          "廉京葵",
+        ],
       },
-      prizeWinnerOptions: [{
-          value: 1,
-          label: "抽取1人",
-        },
-        {
-          value: 5,
-          label: "抽取5人",
-        },
-        {
-          value: 10,
-          label: "抽取10人",
-        },
-      ],
-      prizeOptions: [{
-          value: 'firstPrize',
-          label: "一等奖",
-        },
-        {
-          value: 'secondPrize',
-          label: "二等奖",
-        },
-        {
-          value: 'thirdPrize',
-          label: "三等奖",
-        },
-      ],
-      guestList: []
 
-    },
-
-    created: function () {
-      // `this` 指向 vm 实例
-      // console.log('a is: ' + this.a)
-      this.guestList = this.generateGuest();
-    },
-
-    // computed: {
-    //   guestList() {
-    //     const arr = [];
-    //     for (let i = 0; i < 200; i++) {
-    //       arr.push(i);
-    //     }
-    //     return arr;
-    //   },
-    // },
-
-    methods: {
-      generateGuest() {
-        const arr = [];
-        for (let i = 0; i < 50; i++) {
-          arr.push(i);
-        }
-        return arr;
+      created: function () {
+        // `this` 指向 vm 实例
+        // console.log('a is: ' + this.a)
+        // this.guestList = this.generateGuest();
       },
 
-      speed() {
-        return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
-      },
-
-      createCanvas() {
-        const canvas = document.createElement("canvas");
-        canvas.width = document.body.offsetWidth;
-        canvas.height = document.body.offsetHeight;
-        canvas.id = "myCanvas";
-        document.getElementById("myCanvasContainer").appendChild(canvas);
-      },
-
-      startTagCanvas() {
-        this.createCanvas();
-        try {
-          TagCanvas.Start("myCanvas", "tags", {
-            textColour: "#fff",
-            initial: this.speed(),
-            dragControl: 1,
-            textHeight: 20,
-            noSelect: true,
-            lock: "xy",
-          });
-        } catch (e) {
-          // something went wrong, hide the canvas container
-          document.getElementById("myCanvasContainer").style.display = "none";
-        }
-        document.getElementById("myCanvas").width = document.body.offsetWidth;
-        document.getElementById("myCanvas").height =
-          document.body.offsetHeight;
-      },
-
-      reportWindowSize() {
-        const AppCanvas = document.getElementById("myCanvas");
-        if (AppCanvas.parentElement) {
-          AppCanvas.parentElement.removeChild(AppCanvas);
-        }
-        this.startTagCanvas();
-      },
-
-      // loadAudio() {
-      //     document.getElementById('audiobg').load();
-      //     this.$nextTick(() => {
-      //         document.getElementById('audiobg').play();
-      //     });
+      // computed: {
+      //   guestList() {
+      //     const arr = [];
+      //     for (let i = 0; i < 200; i++) {
+      //       arr.push(i);
+      //     }
+      //     return arr;
+      //   },
       // },
 
-      // playHandler() {
-      //     this.audioPlaying = true;
-      // },
+      methods: {
+        generateGuest() {
+          const arr = [];
+          for (let i = 0; i < 100; i++) {
+            arr.push(i);
+          }
+          return arr;
+        },
 
-      // pauseHandler() {
-      //     this.audioPlaying = false;
-      // },
+        speed() {
+          return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
+        },
 
-      toggle() {
-        if (this.running) {
-          // 停止抽奖
-          // this.audioSrc = bgaudio;
-          // this.loadAudio();
-          window.TagCanvas.SetSpeed("myCanvas", this.speed());
+        createCanvas() {
+          const canvas = document.createElement("canvas");
+          canvas.width = document.body.offsetWidth;
+          canvas.height = document.body.offsetHeight;
+          canvas.id = "myCanvas";
+          document.getElementById("myCanvasContainer").appendChild(canvas);
+        },
+
+        startTagCanvas() {
+          this.createCanvas();
+          try {
+            TagCanvas.Start("myCanvas", "tags", {
+              textColour: "#fff",
+              initial: this.speed(),
+              dragControl: 1,
+              textHeight: 20,
+              noSelect: true,
+              lock: "xy",
+            });
+          } catch (e) {
+            // something went wrong, hide the canvas container
+            document.getElementById("myCanvasContainer").style.display = "none";
+          }
+          document.getElementById("myCanvas").width = document.body.offsetWidth;
+          document.getElementById("myCanvas").height =
+            document.body.offsetHeight;
+        },
+
+        reportWindowSize() {
+          const AppCanvas = document.getElementById("myCanvas");
+          if (AppCanvas.parentElement) {
+            AppCanvas.parentElement.removeChild(AppCanvas);
+          }
+          this.startTagCanvas();
+        },
+
+        // loadAudio() {
+        //     document.getElementById('audiobg').load();
+        //     this.$nextTick(() => {
+        //         document.getElementById('audiobg').play();
+        //     });
+        // },
+
+        // playHandler() {
+        //     this.audioPlaying = true;
+        // },
+
+        // pauseHandler() {
+        //     this.audioPlaying = false;
+        // },
+
+        toggle() {
+          if (this.running) {
+            // 停止抽奖
+            // this.audioSrc = bgaudio;
+            // this.loadAudio();
+            window.TagCanvas.SetSpeed("myCanvas", this.speed());
+            this.running = !this.running;
+            // 随机抽取获奖嘉宾
+            const winnerGuests = this.getRandomGuest(this.prizeWinners);
+            // 将已中奖的嘉宾从抽奖池中删除
+            this.guestList = this.removeCommonElements(
+              this.guestList,
+              winnerGuests
+            );
+            // 存储中奖嘉宾
+            this.resultList[this.prizeType].value = winnerGuests;
+            this.resultList[this.prizeType].num = this.prizeWinners;
+            this.resultList.winnerGuestNum =
+              this.resultList.winnerGuestNum + this.prizeWinners;
+            this.showRes = true;
+            console.log(this.resultList);
+            // console.log(winners);
+            console.log(this.guestList);
+            this.$nextTick(() => {
+              this.reportWindowSize();
+            });
+          } else {
+            // 开始抽奖
+            // this.audioSrc = beginaudio;
+            // this.loadAudio();
+            this.dialogVisible = true;
+          }
+        },
+
+        StartLottery() {
+          if (this.prizeType == null || this.prizeWinners == null) return;
+          // 判断重复抽奖
+          if (this.resultList[this.prizeType].num != 0) {
+            this.repeatWarnVisible = true;
+            return;
+          }
+          window.TagCanvas.SetSpeed("myCanvas", [3, 1]);
           this.running = !this.running;
-          // 随机抽取获奖嘉宾
-          const winnerGuests = this.getRandomGuest(this.prizeWinners);
-          // 将已中奖的嘉宾从抽奖池中删除
-          this.guestList = this.removeCommonElements(
-            this.guestList,
-            winnerGuests
-          );
-          // 存储中奖嘉宾
-          this.resultList[this.prizeType].value = winnerGuests;
-          this.resultList[this.prizeType].num = this.prizeWinners;
-          this.resultList.winnerGuestNum = this.resultList.winnerGuestNum + this.prizeWinners;
-          this.showRes = true;
-          console.log(this.resultList);
-          // console.log(winners);
-          console.log(this.guestList);
-          this.$nextTick(() => {
-            this.reportWindowSize();
-          });
-        } else {
-          // 开始抽奖
-          // this.audioSrc = beginaudio;
-          // this.loadAudio();
-          this.dialogVisible = true;
-        }
+          this.dialogVisible = false;
+        },
+
+        handleClose(done) {
+          this.$confirm("确认关闭？")
+            .then((_) => {
+              done();
+            })
+            .catch((_) => {});
+        },
+
+        handleRepeatWarnClose() {
+          this.repeatWarnVisible = false;
+        },
+
+        getRandomGuest(count) {
+          const originalArray = this.guestList;
+          const arrayLength = this.guestList.length;
+
+          // 用于存储抽取的随机数
+          const resultArray = [];
+
+          // 从原始数组中随机抽取指定个数的不重复的元素
+          for (let i = 0; i < count; i++) {
+            const randomIndex = Math.floor(Math.random() * (arrayLength - i));
+            resultArray.push(originalArray[randomIndex]);
+
+            // 将已抽取的元素与数组末尾元素交换，确保不重复抽取
+            [originalArray[randomIndex], originalArray[arrayLength - 1 - i]] = [
+              originalArray[arrayLength - 1 - i],
+              originalArray[randomIndex],
+            ];
+          }
+          return resultArray;
+        },
+
+        removeCommonElements(arrayA, arrayB) {
+          // 使用 Set 存储数组 B 的元素
+          const setB = new Set(arrayB);
+
+          // 过滤数组 A，保留不包含在数组 B 中的元素
+          const resultArray = arrayA.filter((element) => !setB.has(element));
+
+          return resultArray;
+        },
+
+        closeResult() {
+          // 重置抽奖
+          this.prizeType = null;
+          this.prizeWinners = null;
+          this.showRes = false;
+        },
       },
 
-      StartLottery() {
-        if (this.prizeType == null || this.prizeWinners == null) return
-        // 判断重复抽奖
-        if (this.resultList[this.prizeType].num != 0) {
-          this.repeatWarnVisible = true;
-          return
-        }
-        window.TagCanvas.SetSpeed("myCanvas", [3, 1]);
-        this.running = !this.running;
-        this.dialogVisible = false;
+      mounted() {
+        this.startTagCanvas();
+        window.addEventListener("resize", this.reportWindowSize);
       },
-
-      handleClose(done) {
-        this.$confirm("确认关闭？")
-          .then((_) => {
-            done();
-          })
-          .catch((_) => {});
-      },
-
-      handleRepeatWarnClose() {
-        this.repeatWarnVisible = false;
-      },
-
-      getRandomGuest(count) {
-        const originalArray = this.guestList;
-        const arrayLength = this.guestList.length;
-
-        // 用于存储抽取的随机数
-        const resultArray = [];
-
-        // 从原始数组中随机抽取指定个数的不重复的元素
-        for (let i = 0; i < count; i++) {
-          const randomIndex = Math.floor(Math.random() * (arrayLength - i));
-          resultArray.push(originalArray[randomIndex]);
-
-          // 将已抽取的元素与数组末尾元素交换，确保不重复抽取
-          [originalArray[randomIndex], originalArray[arrayLength - 1 - i]] = [
-            originalArray[arrayLength - 1 - i],
-            originalArray[randomIndex],
-          ];
-        }
-        return resultArray;
-      },
-
-      removeCommonElements(arrayA, arrayB) {
-        // 使用 Set 存储数组 B 的元素
-        const setB = new Set(arrayB);
-
-        // 过滤数组 A，保留不包含在数组 B 中的元素
-        const resultArray = arrayA.filter((element) => !setB.has(element));
-
-        return resultArray;
-      },
-
-      closeResult() {
-        // 重置抽奖
-        this.prizeType = null;
-        this.prizeWinners = null;
-        this.showRes = false;
-      }
-    },
-
-    mounted() {
-      this.startTagCanvas();
-      window.addEventListener("resize", this.reportWindowSize);
-    },
-  });
-</script>
-
+    });
+  </script>
 </html>
