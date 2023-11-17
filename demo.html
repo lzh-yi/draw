@@ -1,68 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./tagcanvas.min.js" type="text/javascript"></script>
+    <script src="./vue.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <!-- 引入ElementUI样式 -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <!-- 引入ElementUI组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  </head>
 
-<head>
-  <title>TagCanvas example</title>
-  <!--[if lt IE 9]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
-  <script src="./tagcanvas.min.js" type="text/javascript"></script>
-  <style>
-    body {
-      width: 100%;
-      /* height: 100vh; */
-    }
-  </style>
-  <script type="text/javascript">
-    window.onload = function () {
-      try {
-        TagCanvas.Start('myCanvas', 'tags', {
-          textColour: '#ff0000',
-          outlineColour: '#ff00ff',
-          reverse: true,
-          depth: 0.8,
-          maxSpeed: 0.05
-        });
-      } catch (e) {
-        // something went wrong, hide the canvas container
-        document.getElementById('myCanvasContainer').style.display = 'none';
-      }
-      document.getElementById("myCanvas").width = document.body.offsetWidth;
-      document.getElementById("myCanvas").height = document.body.offsetHeight;
-    };
+  <body>
+    <div id="app">
+      <div class="main-container">
+        <el-dialog
+          title="抽奖配置"
+          :visible.sync="dialogVisible"
+          width="30%"
+          :before-close="handleClose"
+        >
+          <div>
+            <span style="font-size: 16px">抽取奖项</span>
+            <el-select
+              style="margin-left: 20px"
+              v-model="prizeType"
+              placeholder="请选择"
+            >
+              <el-option
+                v-for="item in prizeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </div>
+          <div style="margin-top: 20px">
+            <span style="font-size: 16px">抽取人数</span>
+            <el-select
+              style="margin-left: 20px"
+              v-model="prizeWinners"
+              placeholder="请选择"
+            >
+              <el-option
+                v-for="item in prizeWinnerOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </div>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="StartLottery">开始抽奖</el-button>
+          </span>
+        </el-dialog>
+
+        <div class="top-bar">
+          <p class="title">年会抽奖</p>
+        </div>
+        <div class="btn-wrap">
+          <button v-if="!running" class="el-button success" @click="toggle()">
+            开始抽奖
+          </button>
+          <button v-if="running" class="el-button warn" @click="toggle()">
+            停止抽奖
+          </button>
+        </div>
+        <div id="myCanvasContainer">
+          <!-- <canvas id="myCanvas"></canvas> -->
+        </div>
+        <div id="tags">
+          <ul v-for="item in guestList">
+            <li>
+              <a href="javascript:void(0);" style="color: rgb(255, 255, 255)"
+                >{{ item }}</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- <audio id="audiobg" preload="auto" controls autoplay loop @play="playHandler" @pause="pauseHandler">
+      <source :src="audioSrc" />
+      你的浏览器不支持audio标签
+    </audio> -->
+    </div>
+  </body>
+
+  <script>
+    // import bgaudio from './assets/bg.mp3';
+    // import beginaudio from './assets/begin.mp3';
+
+    new Vue({
+      el: "#app",
+      data: {
+        // audioSrc: bgaudio,
+        // audioPlaying: false,
+        running: false,
+        dialogVisible: false,
+        prizeResultViable: false,
+        prizeType: null,
+        prizeWinners: null,
+        resultList: {
+
+        },
+        prizeWinnerOptions: [
+          {
+            value: 1,
+            label: "抽取1人",
+          },
+          {
+            value: 5,
+            label: "抽取5人",
+          },
+          {
+            value: 10,
+            label: "抽取10人",
+          },
+        ],
+        prizeOptions: [
+          {
+            value: 1,
+            label: "一等奖",
+          },
+          {
+            value: 2,
+            label: "二等奖",
+          },
+          {
+            value: 3,
+            label: "三等奖",
+          },
+        ],
+        guestList: [],
+      },
+
+      created: function () {
+        // `this` 指向 vm 实例
+        // console.log('a is: ' + this.a)
+        this.guestList = this.generateGuest();
+      },
+
+      // computed: {
+      //   guestList() {
+      //     const arr = [];
+      //     for (let i = 0; i < 200; i++) {
+      //       arr.push(i);
+      //     }
+      //     return arr;
+      //   },
+      // },
+
+      methods: {
+        generateGuest() {
+          const arr = [];
+          for (let i = 0; i < 16; i++) {
+            arr.push(i);
+          }
+          return arr;
+        },
+
+        speed() {
+          return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
+        },
+
+        createCanvas() {
+          const canvas = document.createElement("canvas");
+          canvas.width = document.body.offsetWidth;
+          canvas.height = document.body.offsetHeight;
+          canvas.id = "myCanvas";
+          document.getElementById("myCanvasContainer").appendChild(canvas);
+        },
+
+        startTagCanvas() {
+          this.createCanvas();
+          try {
+            TagCanvas.Start("myCanvas", "tags", {
+              textColour: "#fff",
+              initial: this.speed(),
+              dragControl: 1,
+              textHeight: 20,
+              noSelect: true,
+              lock: "xy",
+            });
+          } catch (e) {
+            // something went wrong, hide the canvas container
+            document.getElementById("myCanvasContainer").style.display = "none";
+          }
+          document.getElementById("myCanvas").width = document.body.offsetWidth;
+          document.getElementById("myCanvas").height =
+            document.body.offsetHeight;
+        },
+
+        reportWindowSize() {
+          const AppCanvas = document.getElementById("myCanvas");
+          if (AppCanvas.parentElement) {
+            AppCanvas.parentElement.removeChild(AppCanvas);
+          }
+          this.startTagCanvas();
+        },
+
+        // loadAudio() {
+        //     document.getElementById('audiobg').load();
+        //     this.$nextTick(() => {
+        //         document.getElementById('audiobg').play();
+        //     });
+        // },
+
+        // playHandler() {
+        //     this.audioPlaying = true;
+        // },
+
+        // pauseHandler() {
+        //     this.audioPlaying = false;
+        // },
+
+        toggle() {
+          if (this.running) {
+            // 停止抽奖
+            // this.audioSrc = bgaudio;
+            // this.loadAudio();
+            window.TagCanvas.SetSpeed("myCanvas", this.speed());
+            this.running = !this.running;
+            // 随机抽取获奖嘉宾
+            this.resultList = this.getRandomGuest(this.prizeWinners);
+            // console.log(winners);
+            // console.log(this.guestList);
+            this.$nextTick(() => {
+              this.reportWindowSize();
+            });
+          } else {
+            // 开始抽奖
+            // this.audioSrc = beginaudio;
+            // this.loadAudio();
+            this.dialogVisible = true;
+          }
+        },
+
+        StartLottery() {
+          window.TagCanvas.SetSpeed("myCanvas", [3, 1]);
+          this.running = !this.running;
+          this.dialogVisible = false;
+        },
+
+        handleClose(done) {
+          this.$confirm("确认关闭？")
+            .then((_) => {
+              done();
+            })
+            .catch((_) => {});
+        },
+
+        getRandomGuest(count) {
+          const originalArray = this.guestList;
+          const arrayLength = this.guestList.length;
+
+          // 用于存储抽取的随机数
+          const resultArray = [];
+
+          // 从原始数组中随机抽取指定个数的不重复的元素
+          for (let i = 0; i < count; i++) {
+            const randomIndex = Math.floor(Math.random() * (arrayLength - i));
+            resultArray.push(originalArray[randomIndex]);
+
+            // 将已抽取的元素与数组末尾元素交换，确保不重复抽取
+            [originalArray[randomIndex], originalArray[arrayLength - 1 - i]] = [
+              originalArray[arrayLength - 1 - i],
+              originalArray[randomIndex],
+            ];
+          }
+          // 将已中奖的嘉宾从抽奖池中删除
+          this.guestList = this.removeCommonElements(
+            this.guestList,
+            resultArray
+          );
+          return resultArray;
+        },
+
+        removeCommonElements(arrayA, arrayB) {
+          // 使用 Set 存储数组 B 的元素
+          const setB = new Set(arrayB);
+
+          // 过滤数组 A，保留不包含在数组 B 中的元素
+          const resultArray = arrayA.filter((element) => !setB.has(element));
+
+          return resultArray;
+        },
+      },
+
+      mounted() {
+        this.startTagCanvas();
+        window.addEventListener("resize", this.reportWindowSize);
+      },
+    });
   </script>
-</head>
-
-<body>
-  <h1>TagCanvas example page</h1>
-  <div id="myCanvasContainer">
-    <canvas id="myCanvas" width="900" height="900">
-      <p>Anything in here will be replaced on browsers that support the canvas element</p>
-    </canvas>
-  </div>
-  <div id="tags">
-    <ul>
-      <li><a href="http://www.google.com" target="_blank">Google</a></li>
-      <li><a href="/fish">Fish</a></li>
-      <li><a href="/chips">Chips</a></li>
-      <li><a href="/salt">Salt</a></li>
-      <li><a href="/vinegar">Vinegar</a></li>
-      <li><a href="/fish">Fish</a></li>
-      <li><a href="/chips">Chips</a></li>
-      <li><a href="/salt">Salt</a></li>
-      <li><a href="/vinegar">Vinegar</a></li>
-      <li><a href="/fish">Fish</a></li>
-      <li><a href="/chips">Chips</a></li>
-      <li><a href="/salt">Salt</a></li>
-      <li><a href="/vinegar">Vinegar</a></li>
-      <li><a href="/fish">Fish</a></li>
-      <li><a href="/chips">Chips</a></li>
-      <li><a href="/salt">Salt</a></li>
-      <li><a href="/vinegar">Vinegar</a></li>
-      <li><a href="/fish">Fish</a></li>
-      <li><a href="/chips">Chips</a></li>
-      <li><a href="/salt">Salt</a></li>
-      <li><a href="/vinegar">Vinegar</a></li>
-    </ul>
-  </div>
-</body>
-
 </html>
